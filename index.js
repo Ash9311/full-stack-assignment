@@ -3,6 +3,7 @@ const app = express()
 const port = 3002
 var jwt = require("jsonwebtoken");
 const USERS = [];
+const { auth } = require("./middleware");
 const bodyParser = require("body-parser");
 var jsonParser = bodyParser.json();
 var urlencodedParser = bodyParser.urlencoded({ extended: false });
@@ -91,9 +92,7 @@ const PROBLEMS = [
 ];
 
 
-const SUBMISSION = [
-
-]
+const SUBMISSION = []
 
 app.post('/signup', function (req, res) {
   // Add logic to decode body
@@ -146,16 +145,46 @@ app.get('/problems', function (req, res) {
   res.json({problems:filteredProblems})
 });
 
-app.get("/submissions", function (req, res) {
+app.get("/submissions",auth, function (req, res) {
   // return the users submissions for this problem
-  res.send("Hello World from route 4!")
+  const problemId = req.body.problemId;
+  const submission = SUBMISSION.filter((submission)=>{
+    submission.problemId==problemId && submission.userId ==req.userId
+  });
+  res.json({submission})
 });
 
 
-app.post("/submissions", function (req, res) {
+app.post("/submissions",auth, function (req, res) {
   // let the user submit a problem, randomly accept or reject the solution
+  const isCorrect = Math.random() < 0.5;
+  const problemId = req.body.problemId;
+  const submission = req.body.submission;
+  
   // Store the submission in the SUBMISSION array above
-  res.send("Hello World from route 4!")
+  if(isCorrect){
+    SUBMISSION.push({
+      submission,
+      problemId,
+      userId:req.userId,
+      status:"AC"
+    });
+    return res.json({
+      status: "AC"
+    })
+  }
+  else{
+    SUBMISSION.push({
+      submission,
+      problemId,
+      userId:req.userId,
+      status:"WA"
+    });
+    return res.json({
+      status:"WA"
+    })
+  }
+ 
 });
 
 // leaving as hard todos
